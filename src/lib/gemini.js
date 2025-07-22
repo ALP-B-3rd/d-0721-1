@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AIzaSyCBF5XoPWgzzIF8Kt3LsF84083su0mWNdY";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 export async function getGeminiContent(userText) {
