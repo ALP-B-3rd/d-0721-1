@@ -21,13 +21,49 @@ export default function Home() {
     fetchPosts();
   }, []);
 
+  async function getUserIP() {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      return data.ip;
+    } catch {
+      return null;
+    }
+  }
+
   async function handleLike(postId) {
-    await supabase.from("posts").update({ likes: supabase.literal('likes + 1') }).eq("id", postId);
-    setPosts(posts => posts.map(p => p.id === postId ? { ...p, likes: (p.likes ?? 0) + 1 } : p));
+    const ip = await getUserIP();
+    if (!ip) return alert('IP를 가져올 수 없습니다.');
+    const res = await fetch('/api/post-like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: postId, type: 'like', ip })
+    });
+    if (res.status === 409) {
+      alert('이미 따봉을 누르셨습니다!');
+      return;
+    }
+    const data = await res.json();
+    if (data.success) {
+      setPosts(posts => posts.map(p => p.id === postId ? { ...p, likes: data.newCount } : p));
+    }
   }
   async function handleDislike(postId) {
-    await supabase.from("posts").update({ dislikes: supabase.literal('dislikes + 1') }).eq("id", postId);
-    setPosts(posts => posts.map(p => p.id === postId ? { ...p, dislikes: (p.dislikes ?? 0) + 1 } : p));
+    const ip = await getUserIP();
+    if (!ip) return alert('IP를 가져올 수 없습니다.');
+    const res = await fetch('/api/post-like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: postId, type: 'dislike', ip })
+    });
+    if (res.status === 409) {
+      alert('이미 비추를 누르셨습니다!');
+      return;
+    }
+    const data = await res.json();
+    if (data.success) {
+      setPosts(posts => posts.map(p => p.id === postId ? { ...p, dislikes: data.newCount } : p));
+    }
   }
   async function handleDelete(postId) {
     await supabase.from("posts").delete().eq("id", postId);
